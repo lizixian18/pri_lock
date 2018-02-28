@@ -6,13 +6,18 @@ import android.app.usage.UsageEvents;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
+import com.lzx.applock.bean.LockAppInfo;
 import com.lzx.applock.constants.Constants;
+import com.lzx.applock.db.DbManager;
+import com.lzx.applock.module.lock.UnlockView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Remote Service
+ *
  * @author lzx
  * @date 2018/2/28
  */
@@ -28,12 +34,18 @@ public class AppLockService extends Service {
 
     private AtomicBoolean mIsServiceDestoryed = new AtomicBoolean(false);
     private ActivityManager activityManager;
-
+    private PackageManager mPackageManager;
+    private static String currOpenPackageName = "";
+    private UnlockView mUnlockView;
 
     @Override
     public void onCreate() {
         super.onCreate();
         activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        mPackageManager = getPackageManager();
+        mUnlockView = new UnlockView(this);
+
+        new Thread(new ServiceWorker()).start();
     }
 
     @Nullable
@@ -54,7 +66,30 @@ public class AppLockService extends Service {
         public void run() {
             while (!mIsServiceDestoryed.get()) {
                 String packageName = getLauncherTopApp(AppLockService.this, activityManager);
+                if (!inWhiteList(packageName) && !TextUtils.isEmpty(packageName) && !packageName.equals(currOpenPackageName)) {
+
+                    //如果是加锁应用
+                    if (DbManager.get().isLockedPackageName(packageName)) {
+                        //先解锁，避免重复打开解锁View
+                        DbManager.get().updateLockedStatus(packageName, false);
+                        openUnLockView(packageName);
+                        continue;
+                    }
+                }
             }
+        }
+    }
+
+    private void openUnLockView(String packageName) {
+        try {
+            currOpenPackageName = packageName;
+            LockAppInfo info = DbManager.get().queryLockAppInfoByPackageName(packageName);
+            ApplicationInfo appInfo = mPackageManager.getApplicationInfo(info.getPackageName(), PackageManager.GET_UNINSTALLED_PACKAGES);
+            info.setAppInfo(appInfo);
+            mUnlockView.setLockAppInfo(info);
+            mUnlockView.showUnLockView();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -63,7 +98,7 @@ public class AppLockService extends Service {
      * 白名单
      */
     private boolean inWhiteList(String packageName) {
-        return packageName.equals(Constants.APP_PACKAGE_NAME)  || packageName.equals("com.android.settings");
+        return packageName.equals(Constants.APP_PACKAGE_NAME) || packageName.equals("com.android.settings");
     }
 
     /**

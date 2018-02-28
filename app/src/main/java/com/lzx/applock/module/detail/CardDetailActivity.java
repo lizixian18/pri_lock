@@ -19,6 +19,7 @@ import com.lzx.applock.R;
 import com.lzx.applock.adapter.LockedListAdapter;
 import com.lzx.applock.base.BaseActivity;
 import com.lzx.applock.bean.LockAppInfo;
+import com.lzx.applock.db.DbManager;
 import com.lzx.applock.helper.LoadAppHelper;
 import com.lzx.applock.utils.AppBarStateChangeEvent;
 import com.lzx.applock.utils.SystemBarHelper;
@@ -103,7 +104,7 @@ public class CardDetailActivity extends BaseActivity {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setAdapter(mLockedListAdapter);
 
-        LoadAppHelper.loadAllLockAppInfoAsync(this)
+        DbManager.get().queryLockAppInfoListAsync()
                 .subscribe(new Consumer<List<LockAppInfo>>() {
                     @Override
                     public void accept(List<LockAppInfo> lockAppInfos) throws Exception {

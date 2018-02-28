@@ -1,5 +1,6 @@
 package com.lzx.applock.module.main;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -14,6 +15,7 @@ import com.lzx.applock.bean.LockAppInfo;
 import com.lzx.applock.constants.Constants;
 import com.lzx.applock.db.DbManager;
 import com.lzx.applock.helper.LoadAppHelper;
+import com.lzx.applock.service.AppLockService;
 import com.lzx.applock.utils.SpUtil;
 
 import java.util.List;
@@ -39,18 +41,8 @@ public class MainActivity extends BaseActivity {
         SpUtil.getInstance().putBoolean(Constants.IS_FIRST_TIME, false);
         initFragments();
 
-        LoadAppHelper.loadAllLockAppInfoAsync(this)
-                .subscribe(new Consumer<List<LockAppInfo>>() {
-                    @Override
-                    public void accept(List<LockAppInfo> lockAppInfos) throws Exception {
-                        DbManager.get().saveLockAppInfoListAsync(lockAppInfos);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        Toast.makeText(mContext, "数据处理错误", Toast.LENGTH_SHORT).show();
-                    }
-                });
+        Intent intent = new Intent(this, AppLockService.class);
+        startService(intent);
     }
 
     private void changeFragment(int position) {

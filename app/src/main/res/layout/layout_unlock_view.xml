@@ -9,7 +9,8 @@
     <ImageView
         android:id="@+id/bg_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+         />
 
     <RelativeLayout
         android:id="@+id/app_bar_layout"

@@ -3,11 +3,14 @@ package com.lzx.applock.db;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 
 import com.lzx.applock.LockApplication;
 import com.lzx.applock.bean.LockAppInfo;
+import com.lzx.applock.utils.LogUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +30,7 @@ public class DbManager {
 
     private Context mContext;
     private ContentResolver mResolver;
+    private PackageManager mPackageManager;
 
     private static final byte[] sLock = new byte[0];
 
@@ -46,6 +50,7 @@ public class DbManager {
     private DbManager() {
         mContext = LockApplication.getContext();
         mResolver = mContext.getContentResolver();
+        mPackageManager = mContext.getPackageManager();
     }
 
     /**
@@ -59,6 +64,7 @@ public class DbManager {
         if (cursor == null) {
             return new ArrayList<>();
         }
+        LogUtil.i("getCount = " + cursor.getCount());
         List<LockAppInfo> list = new ArrayList<>();
         while (cursor.moveToNext()) {
             long id = cursor.getLong(cursor.getColumnIndex(DbConstants.ID));
@@ -85,13 +91,8 @@ public class DbManager {
     }
 
 
-    /**
-     * 保存播放列表
-     *
-     * @param list
-     */
     private void saveInfoList(List<LockAppInfo> list) {
-        clearPlayList();
+        clearInfoList();
         Uri uri = LockContentProvider.LOCK_URI;
         for (LockAppInfo info : list) {
             ContentValues values = new ContentValues();
@@ -107,30 +108,20 @@ public class DbManager {
         }
     }
 
-    /**
-     * 删除一条播放列表
-     *
-     * @return The number of rows deleted.
-     */
+
     private int deleteInfoInPlayList(String packageName) {
         Uri uri = LockContentProvider.LOCK_URI;
         return mResolver.delete(uri, DbConstants.PACKAGENAME + " = ?", new String[]{packageName});
     }
 
-    /**
-     * 清空播放列表
-     *
-     * @return The number of rows deleted.
-     */
-    private int clearPlayList() {
+
+    private int clearInfoList() {
         Uri uri = LockContentProvider.LOCK_URI;
         return mResolver.delete(uri, null, null);
     }
 
-    /**
-     * 获取一条音乐信息
-     */
-    private LockAppInfo queryLockAppInfoByPackageName(String packageName) {
+
+    public LockAppInfo queryLockAppInfoByPackageName(String packageName) {
         Uri uri = LockContentProvider.LOCK_URI;
         Cursor cursor = mResolver.query(uri, null, DbConstants.PACKAGENAME + " = ?", new String[]{packageName}, null);
         if (cursor == null) {
@@ -159,6 +150,27 @@ public class DbManager {
         return info;
     }
 
+    public boolean isLockedPackageName(String packageName) {
+        Uri uri = LockContentProvider.LOCK_URI;
+        Cursor cursor = mResolver.query(uri, null, DbConstants.PACKAGENAME + " = ?", new String[]{packageName}, null);
+        if (cursor == null) {
+            return false;
+        }
+        boolean result = false;
+        while (cursor.moveToNext()) {
+            result = cursor.getInt(cursor.getColumnIndex(DbConstants.ISLOCK)) == 0;
+        }
+        cursor.close();
+        return result;
+    }
+
+    public void updateLockedStatus(String packageName, boolean isLocked) {
+        Uri uri = LockContentProvider.LOCK_URI;
+        ContentValues values = new ContentValues();
+        values.put(DbConstants.ISLOCK, isLocked ? 0 : 1);
+        mResolver.update(uri, values, DbConstants.PACKAGENAME + " = ?", new String[]{packageName});
+    }
+
     public Observable<Boolean> saveLockAppInfoListAsync(final List<LockAppInfo> list) {
         return Observable.create(new ObservableOnSubscribe<Boolean>() {
             @Override
@@ -174,9 +186,14 @@ public class DbManager {
             @Override
             public void subscribe(ObservableEmitter<List<LockAppInfo>> emitter) throws Exception {
                 List<LockAppInfo> list = queryInfoList();
+                for (LockAppInfo info : list) {
+                    ApplicationInfo appInfo = mPackageManager.getApplicationInfo(info.getPackageName(), PackageManager.GET_UNINSTALLED_PACKAGES);
+                    info.setAppInfo(appInfo);
+                }
                 emitter.onNext(list);
             }
         }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread());
     }
+
 
 }

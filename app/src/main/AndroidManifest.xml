@@ -63,6 +63,11 @@
             </intent-filter>
         </service>
 
+        <provider
+            android:name=".db.LockContentProvider"
+            android:authorities="com.lzx.applock.db.provider"
+            android:exported="false"/>
+
     </application>
 
 </manifest>

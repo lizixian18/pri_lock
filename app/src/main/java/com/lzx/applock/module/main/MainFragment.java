@@ -12,9 +12,11 @@ import com.lzx.applock.R;
 import com.lzx.applock.adapter.LockedAdapter;
 import com.lzx.applock.base.BaseFragment;
 import com.lzx.applock.bean.LockAppInfo;
+import com.lzx.applock.db.DbManager;
 import com.lzx.applock.helper.LoadAppHelper;
 import com.lzx.applock.module.detail.CardDetailActivity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.functions.Consumer;
@@ -32,7 +34,7 @@ public class MainFragment extends BaseFragment {
 
     private Toolbar mToolbar;
     private RecyclerView mLockedRecycleview, mUnLockedRecycleview;
-    private CardView mSysCardView,mUserCardView;
+    private CardView mSysCardView, mUserCardView;
     private LockedAdapter mLockedAdapter;
     private LockedAdapter mUnLockedAdapter;
 
@@ -60,13 +62,13 @@ public class MainFragment extends BaseFragment {
         mSysCardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                CardDetailActivity.launch(getActivity(),"sys");
+                CardDetailActivity.launch(getActivity(), "sys");
             }
         });
         mUserCardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                CardDetailActivity.launch(getActivity(),"user" +
+                CardDetailActivity.launch(getActivity(), "user" +
                         "");
             }
         });
@@ -94,24 +96,21 @@ public class MainFragment extends BaseFragment {
     }
 
     private void updateAdapterData() {
-        LoadAppHelper.loadLockedAppInfoAsync(getActivity())
+        DbManager.get().queryLockAppInfoListAsync()
                 .subscribe(new Consumer<List<LockAppInfo>>() {
                     @Override
                     public void accept(List<LockAppInfo> lockAppInfos) throws Exception {
-                        mLockedAdapter.setLockAppInfos(lockAppInfos);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        Toast.makeText(mContext, "加载数据失败", Toast.LENGTH_SHORT).show();
-                    }
-                });
-
-        LoadAppHelper.loadUnLockAppInfoAsync(getActivity())
-                .subscribe(new Consumer<List<LockAppInfo>>() {
-                    @Override
-                    public void accept(List<LockAppInfo> lockAppInfos) throws Exception {
-                        mUnLockedAdapter.setLockAppInfos(lockAppInfos);
+                        List<LockAppInfo> lockedList = new ArrayList<>();
+                        List<LockAppInfo> unlockedList = new ArrayList<>();
+                        for (LockAppInfo info : lockAppInfos) {
+                            if (info.isLocked()) {
+                                lockedList.add(info);
+                            } else {
+                                unlockedList.add(info);
+                            }
+                        }
+                        mLockedAdapter.setLockAppInfos(lockedList);
+                        mUnLockedAdapter.setLockAppInfos(unlockedList);
                     }
                 }, new Consumer<Throwable>() {
                     @Override
