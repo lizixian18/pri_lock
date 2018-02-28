@@ -5,6 +5,7 @@
     <color name="colorAccent">#394A6C</color>
 
     <color name="white">#FFFFFF</color>
+    <color name="transparent">#00000000</color>
     <color name="window_background">#F6F7F9</color>
     <color name="statue_bar_color">#D2D6DE</color>
 </resources>

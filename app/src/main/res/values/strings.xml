@@ -4,4 +4,22 @@
     <string name="force_stop">FORCE STOP</string>
     <string name="force_stop_OK">OK</string>
     <string name="accessibility_service_desc">Turn on the above button to enable AppLock.\n\nEnable to protect:\n 1.Effectively block bandwidth occupying apps.\n 2.Sensitive browing history\n 3.Advance battery saving activites\n\nYou may receive privacy warnings,this is a standard procedure on all Android OS when enabling Accessibility Services.AppLock will NOT collect ANY personal data.</string>
+
+    <!--图形解锁控件相关-->
+    <string name="lockscreen_access_pattern_cell_added">已添加单元格</string>
+    <string name="lockscreen_access_pattern_start">绘制解锁图案</string>
+    <string name="lockscreen_access_pattern_detected">密码已保存</string>
+    <string name="lockscreen_access_pattern_cleared">密码已删除</string>
+
+    <string name="password_gestrue_tips">绘制密码解锁</string>
+    <string name="password_error_count">密码不匹配。请重试。</string>
+    <string name="password_short">请输入至少4个字符。</string>
+
+    <string name="lock_recording_intro_header">Draw your password</string>
+    <string name="lock_settings_help_how_to_record">如何绘制解锁图案</string>
+    <string name="lock_recording_incorrect_too_short">At least 4 points should be connected</string>
+    <string name="lock_pattern_entered_header">记录密码</string>
+    <string name="lock_need_to_confirm">Please draw again</string>
+    <string name="lock_need_to_unlock_wrong">Password does not match, please try again.</string>
+    <string name="lock_pattern_confirmed_header"></string>
 </resources>

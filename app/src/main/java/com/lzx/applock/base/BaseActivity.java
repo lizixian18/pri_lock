@@ -27,7 +27,7 @@ public abstract class BaseActivity extends RxAppCompatActivity {
         setContentView(getLayoutId());
         mContext = this;
         initStatusBar();
-        init();
+        init(savedInstanceState);
     }
 
     protected abstract @LayoutRes  int getLayoutId();
@@ -57,5 +57,5 @@ public abstract class BaseActivity extends RxAppCompatActivity {
         }
     }
 
-    protected abstract void init();
+    protected abstract void init(Bundle savedInstanceState);
 }

@@ -28,6 +28,9 @@ public class LockAppInfo implements Parcelable {
         this.isRecommend = isRecommend;
     }
 
+    public LockAppInfo() {
+    }
+
     public long getId() {
         return id;
     }

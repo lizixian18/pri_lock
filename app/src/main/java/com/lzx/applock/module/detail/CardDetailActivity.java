@@ -3,6 +3,7 @@ package com.lzx.applock.module.detail;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.content.ContextCompat;
@@ -56,7 +57,7 @@ public class CardDetailActivity extends BaseActivity {
     }
 
     @Override
-    protected void init() {
+    protected void init(Bundle savedInstanceState) {
         mBgView = findViewById(R.id.bg_view);
         mIcon = findViewById(R.id.icon);
         mTitle = findViewById(R.id.title);

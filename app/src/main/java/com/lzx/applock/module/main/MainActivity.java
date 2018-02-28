@@ -1,5 +1,6 @@
 package com.lzx.applock.module.main;
 
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
@@ -9,6 +10,15 @@ import android.widget.Toast;
 
 import com.lzx.applock.R;
 import com.lzx.applock.base.BaseActivity;
+import com.lzx.applock.bean.LockAppInfo;
+import com.lzx.applock.constants.Constants;
+import com.lzx.applock.db.DbManager;
+import com.lzx.applock.helper.LoadAppHelper;
+import com.lzx.applock.utils.SpUtil;
+
+import java.util.List;
+
+import io.reactivex.functions.Consumer;
 
 public class MainActivity extends BaseActivity {
 
@@ -24,16 +34,29 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
-    protected void init() {
+    protected void init(Bundle savedInstanceState) {
         mDrawerLayout = findViewById(R.id.drawer_layout);
+        SpUtil.getInstance().putBoolean(Constants.IS_FIRST_TIME, false);
         initFragments();
+
+        LoadAppHelper.loadAllLockAppInfoAsync(this)
+                .subscribe(new Consumer<List<LockAppInfo>>() {
+                    @Override
+                    public void accept(List<LockAppInfo> lockAppInfos) throws Exception {
+                        DbManager.get().saveLockAppInfoListAsync(lockAppInfos);
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        Toast.makeText(mContext, "数据处理错误", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void changeFragment(int position) {
         toggleDrawer();
         changeFragmentIndex(position);
     }
-
 
     private void initFragments() {
         fragments = new Fragment[1];

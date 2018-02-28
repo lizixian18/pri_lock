@@ -125,7 +125,7 @@ public class PermissionHelper {
     /**
      * 判断是否有悬浮窗权限
      */
-    private static boolean isHasManageOverlay(Context context) {
+    public static boolean isHasManageOverlay(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
                 return Settings.canDrawOverlays(context);
@@ -149,7 +149,7 @@ public class PermissionHelper {
     /**
      * 转跳到通知栏界面
      */
-    private static void launchNotificationSettings(Activity activity, int requestCode) {
+    public static void launchNotificationSettings(Activity activity, int requestCode) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
             Intent intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
             activity.startActivityForResult(intent, requestCode);
@@ -161,7 +161,7 @@ public class PermissionHelper {
     /**
      * 转跳到 usage access 界面
      */
-    private static void launchUsageAccessSettings(Activity activity, int requestCode) {
+    public static void launchUsageAccessSettings(Activity activity, int requestCode) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
             activity.startActivityForResult(intent, requestCode);
@@ -173,7 +173,7 @@ public class PermissionHelper {
     /**
      * 转跳到悬浮窗界面
      */
-    private static void launchManageOverlaySettings(Activity activity, int requestCode) {
+    public static void launchManageOverlaySettings(Activity activity, int requestCode) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
             activity.startActivityForResult(intent, requestCode);
