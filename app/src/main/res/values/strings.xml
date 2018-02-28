@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">AppLock</string>
+
+    <string name="force_stop">FORCE STOP</string>
+    <string name="force_stop_OK">OK</string>
+    <string name="accessibility_service_desc">Turn on the above button to enable AppLock.\n\nEnable to protect:\n 1.Effectively block bandwidth occupying apps.\n 2.Sensitive browing history\n 3.Advance battery saving activites\n\nYou may receive privacy warnings,this is a standard procedure on all Android OS when enabling Accessibility Services.AppLock will NOT collect ANY personal data.</string>
+</resources>
