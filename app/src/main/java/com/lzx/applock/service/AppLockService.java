@@ -35,7 +35,7 @@ public class AppLockService extends Service {
     private AtomicBoolean mIsServiceDestoryed = new AtomicBoolean(false);
     private ActivityManager activityManager;
     private PackageManager mPackageManager;
-    private static String currOpenPackageName = "";
+    public static String currOpenPackageName = "";
     private UnlockView mUnlockView;
 
     @Override
@@ -86,6 +86,7 @@ public class AppLockService extends Service {
             LockAppInfo info = DbManager.get().queryLockAppInfoByPackageName(packageName);
             ApplicationInfo appInfo = mPackageManager.getApplicationInfo(info.getPackageName(), PackageManager.GET_UNINSTALLED_PACKAGES);
             info.setAppInfo(appInfo);
+
             mUnlockView.setLockAppInfo(info);
             mUnlockView.showUnLockView();
         } catch (Exception e) {

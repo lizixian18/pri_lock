@@ -1,12 +1,12 @@
 package com.lzx.applock.module.lock;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -23,12 +23,16 @@ import android.widget.TextView;
 
 import com.lzx.applock.R;
 import com.lzx.applock.bean.LockAppInfo;
+import com.lzx.applock.db.DbManager;
+import com.lzx.applock.service.AppLockService;
 import com.lzx.applock.utils.BlurUtil;
 import com.lzx.applock.utils.LockPatternUtils;
 import com.lzx.applock.utils.LockPatternViewPattern;
 import com.lzx.applock.widget.LockPatternView;
 
 import java.util.List;
+
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 /**
  * 解锁界面
@@ -58,11 +62,10 @@ public class UnlockView extends FrameLayout {
     private ApplicationInfo mApplicationInfo;
     private PackageManager mPackageManager;
 
-    public UnlockView(@NonNull Context context ) {
+    public UnlockView(@NonNull Context context) {
         super(context, null, 0);
         init();
     }
-
 
 
     private void init() {
@@ -118,27 +121,9 @@ public class UnlockView extends FrameLayout {
         mHandler.obtainMessage(MSG_ADDVIEW).sendToTarget();
     }
 
-    private boolean closeUnLockView() {
+    private void closeUnLockView() {
         if (mWindowManager != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                if (isAttachedToWindow()) {
-                    mWindowManager.removeViewImmediate(this);
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                try {
-                    if (getParent() != null) {
-                        mWindowManager.removeViewImmediate(this);
-                    }
-                    return true;
-                } catch (Exception e) {
-                    return false;
-                }
-            }
-        } else {
-            return false;
+            mWindowManager.removeView(this);
         }
     }
 
@@ -219,17 +204,28 @@ public class UnlockView extends FrameLayout {
         }
     };
 
-
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (event.getKeyCode()) {
-            case KeyEvent.KEYCODE_BACK:
-            case KeyEvent.KEYCODE_MENU:
-                // 处理自己的逻辑break;
-
-            default:
-                break;
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (getParent() != null) {
+                goHome();
+                closeUnLockView();
+                DbManager.get().updateLockedStatus(mLockAppInfo.getPackageName(), true);
+                AppLockService.currOpenPackageName = "";
+            }
+            return true;
         }
-        return super.onKeyDown(keyCode, event);
+        return false;
+    }
+
+
+    /**
+     * Home键操作
+     */
+    public void goHome() {
+        Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+        homeIntent.addCategory(Intent.CATEGORY_HOME);
+        homeIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(homeIntent);
     }
 }
