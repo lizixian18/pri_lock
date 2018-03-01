@@ -6,11 +6,18 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.support.annotation.NonNull;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -30,7 +37,7 @@ import java.util.List;
  * @date 2018/2/28
  */
 
-public class UnlockView {
+public class UnlockView extends FrameLayout {
 
     private int mFailedPatternAttemptsSinceLastTimeout = 0;
 
@@ -51,45 +58,87 @@ public class UnlockView {
     private ApplicationInfo mApplicationInfo;
     private PackageManager mPackageManager;
 
-    public UnlockView(Context context) {
-        mContext = context;
+    public UnlockView(@NonNull Context context ) {
+        super(context, null, 0);
+        init();
+    }
+
+
+
+    private void init() {
+        mContext = getContext();
+
         mPackageManager = mContext.getPackageManager();
-        //创建悬浮窗
-        mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
-        mLayoutParams = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSPARENT
-        );
-        mLayoutParams.gravity = Gravity.CENTER;
-    }
 
-    public void setLockAppInfo(LockAppInfo lockAppInfo) {
-        mLockAppInfo = lockAppInfo;
-    }
-
-    public void showUnLockView() {
-        if (mLockAppInfo == null) {
-            return;
-        }
-        mUnLockView = LayoutInflater.from(mContext).inflate(R.layout.layout_unlock_view, null, false);
+        mUnLockView = LayoutInflater.from(mContext).inflate(R.layout.layout_unlock_view, this);
         mBgView = mUnLockView.findViewById(R.id.bg_view);
         mUnLockIcon = mUnLockView.findViewById(R.id.unlock_icon);
         mBtnMore = mUnLockView.findViewById(R.id.btn_more);
         mUnLockAppName = mUnLockView.findViewById(R.id.unlock_app_name);
         mPatternView = mUnLockView.findViewById(R.id.unlock_lock_view);
         mUnlockFailTip = mUnLockView.findViewById(R.id.unlock_fail_tip);
-        initBgView();
-        initLockPatternView();
-        mWindowManager.addView(mUnLockView, mLayoutParams);
+
+        //创建悬浮窗
+        mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        mLayoutParams = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSPARENT
+        );
+        mLayoutParams.gravity = Gravity.CENTER;
     }
 
-    private void closeUnLockView() {
-        if (mUnLockView != null) {
-            mWindowManager.removeView(mUnLockView);
-            mUnLockView = null;
+
+    public void setLockAppInfo(LockAppInfo lockAppInfo) {
+        mLockAppInfo = lockAppInfo;
+    }
+
+    private final static int MSG_ADDVIEW = 100;
+
+    private Handler mHandler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case MSG_ADDVIEW:
+                    mWindowManager.addView(UnlockView.this, mLayoutParams);
+                    break;
+            }
+        }
+    };
+
+    public void showUnLockView() {
+        if (mLockAppInfo == null) {
+            return;
+        }
+        initBgView();
+        initLockPatternView();
+        mHandler.obtainMessage(MSG_ADDVIEW).sendToTarget();
+    }
+
+    private boolean closeUnLockView() {
+        if (mWindowManager != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                if (isAttachedToWindow()) {
+                    mWindowManager.removeViewImmediate(this);
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                try {
+                    if (getParent() != null) {
+                        mWindowManager.removeViewImmediate(this);
+                    }
+                    return true;
+                } catch (Exception e) {
+                    return false;
+                }
+            }
+        } else {
+            return false;
         }
     }
 
@@ -169,4 +218,18 @@ public class UnlockView {
             mPatternView.clearPattern();
         }
     };
+
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (event.getKeyCode()) {
+            case KeyEvent.KEYCODE_BACK:
+            case KeyEvent.KEYCODE_MENU:
+                // 处理自己的逻辑break;
+
+            default:
+                break;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
 }
