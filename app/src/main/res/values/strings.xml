@@ -22,4 +22,20 @@
     <string name="lock_need_to_confirm">Please draw again</string>
     <string name="lock_need_to_unlock_wrong">Password does not match, please try again.</string>
     <string name="lock_pattern_confirmed_header"></string>
+
+
+    <string name="permission_finish_request">Congratulations !\nAll permission already obtain, Now please create your unlock password</string>
+    <string name="permission_finish_request_btn">Let\'s go</string>
+    <string name="permission_float_window">Floating Window Permission</string>
+    <string name="permission_usage_stats">Usage Stats Permission</string>
+
+    <string name="sys_app">SystemApp</string>
+    <string name="user_app">UserApp</string>
+
+    <string name="text_screen_off">Lock after the screen is off</string>
+    <string name="model_screen_off">Auto Lock after the screen is off</string>
+    <string name="text_time">Lock after 3 minute</string>
+    <string name="model_time">Auto Lock after 3 minute when the screen is off</string>
+    <string name="text_every_time">Lock every time</string>
+    <string name="model_every_time">Lock every time when close app</string>
 </resources>

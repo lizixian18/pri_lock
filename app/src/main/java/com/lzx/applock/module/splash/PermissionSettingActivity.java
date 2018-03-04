@@ -78,15 +78,16 @@ public class PermissionSettingActivity extends BaseActivity {
         boolean hasFlowWindowPermission = PermissionHelper.isHasManageOverlay(this);
         boolean hasUsageStatsPermission = PermissionHelper.isStatAccessPermissionSet(this);
         if (!hasFlowWindowPermission) {
-            mPermissionName.setText("Floating Window Permission");
+            mPermissionName.setText(getString(R.string.permission_float_window));
             currRequestPermission = "floatWindow";
         } else if (!hasUsageStatsPermission) {
-            mPermissionName.setText("Usage Stats Permission");
+            mPermissionName.setText(getString(R.string.permission_usage_stats));
             currRequestPermission = "UsageStats";
         } else {
             boolean isDrawPwd = SpUtil.getInstance().getBoolean(Constants.IS_DRAW_PWD, false);
             if (!isDrawPwd) {
-                mPermissionName.setText("Congratulations !\nAll permission already obtain, Now please create your unlock password");
+                mPermissionName.setText(getString(R.string.permission_finish_request));
+                mGetBtn.setText(getString(R.string.permission_finish_request_btn));
                 currRequestPermission = "CreatePwd";
             }
         }
@@ -108,7 +109,7 @@ public class PermissionSettingActivity extends BaseActivity {
     }
 
     private void initCommaAnim() {
-        mCommaAnim = ObjectAnimator.ofFloat(mTextComma, "alpha", 0, 1).setDuration(2000);
+        mCommaAnim = ObjectAnimator.ofFloat(mTextComma, "alpha", 0, 1).setDuration(1000);
         mCommaAnim.setInterpolator(new LinearInterpolator());
         mCommaAnim.start();
         mCommaAnim.addListener(new AnimatorListenerAdapter() {
@@ -177,12 +178,13 @@ public class PermissionSettingActivity extends BaseActivity {
         boolean hasUsageStatsPermission = PermissionHelper.isStatAccessPermissionSet(this);
         if (requestCode == REQUEST_FLOATWINDOW) {
             if (hasFlowWindowPermission) {
-                mPermissionName.setText("Usage Stats Permission");
+                mPermissionName.setText(getString(R.string.permission_usage_stats));
                 currRequestPermission = "UsageStats";
             }
         } else if (requestCode == REQUEST_USAGESTATS) {
             if (hasUsageStatsPermission) {
-                mPermissionName.setText("OK，Now please create your unlock password");
+                mPermissionName.setText(getString(R.string.permission_finish_request));
+                mGetBtn.setText(getString(R.string.permission_finish_request_btn));
                 currRequestPermission = "CreatePwd";
             }
         } else if (resultCode == RESULT_OK && requestCode == REQUEST_CREATEPWD) {

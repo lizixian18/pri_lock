@@ -1,12 +1,16 @@
 package com.lzx.applock.module.main;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.view.KeyEvent;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lzx.applock.R;
@@ -15,6 +19,7 @@ import com.lzx.applock.bean.LockAppInfo;
 import com.lzx.applock.constants.Constants;
 import com.lzx.applock.db.DbManager;
 import com.lzx.applock.helper.LoadAppHelper;
+import com.lzx.applock.module.setting.SettingFragment;
 import com.lzx.applock.service.AppLockService;
 import com.lzx.applock.utils.SpUtil;
 
@@ -22,11 +27,11 @@ import java.util.List;
 
 import io.reactivex.functions.Consumer;
 
-public class MainActivity extends BaseActivity {
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
+    private TextView mBtnSetting, mBtnHome;
     private DrawerLayout mDrawerLayout;
     private Fragment[] fragments;
-    private long exitTime;
     private int currentTabIndex;
     private int index;
 
@@ -38,8 +43,16 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void init(Bundle savedInstanceState) {
         mDrawerLayout = findViewById(R.id.drawer_layout);
+        mBtnSetting = findViewById(R.id.btn_setting);
+        mBtnHome = findViewById(R.id.btn_home);
+
         SpUtil.getInstance().putBoolean(Constants.IS_FIRST_TIME, false);
+
         initFragments();
+
+        mBtnHome.setOnClickListener(this);
+        mBtnSetting.setOnClickListener(this);
+        mBtnHome.setBackgroundColor(Color.parseColor("#cccccc"));
 
         Intent intent = new Intent(this, AppLockService.class);
         startService(intent);
@@ -51,10 +64,10 @@ public class MainActivity extends BaseActivity {
     }
 
     private void initFragments() {
-        fragments = new Fragment[1];
-        for (int i = 0; i < fragments.length; i++) {
-            fragments[i] = MainFragment.newInstance();
-        }
+        fragments = new Fragment[2];
+        fragments[0] = MainFragment.newInstance();
+        fragments[1] = SettingFragment.newInstance();
+
         // 添加显示第一个fragment
         getSupportFragmentManager()
                 .beginTransaction()
@@ -101,21 +114,30 @@ public class MainActivity extends BaseActivity {
             if (mDrawerLayout.isDrawerOpen(mDrawerLayout.getChildAt(1))) {
                 mDrawerLayout.closeDrawers();
             } else {
-                exitApp();
+                finish();
             }
         }
         return true;
     }
 
-    /**
-     * 双击退出App
-     */
-    private void exitApp() {
-        if (System.currentTimeMillis() - exitTime > 2000) {
-            Toast.makeText(mContext, "再按一次退出", Toast.LENGTH_SHORT).show();
-            exitTime = System.currentTimeMillis();
-        } else {
-            finish();
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_home:
+                if (index != 0) {
+                    changeFragmentIndex(0);
+                    mBtnHome.setBackgroundColor(ContextCompat.getColor(this,R.color.statue_bar_color));
+                    mBtnSetting.setBackgroundColor(ContextCompat.getColor(this, R.color.white));
+                }
+                break;
+            case R.id.btn_setting:
+                if (index != 1) {
+                    changeFragmentIndex(1);
+                    mBtnHome.setBackgroundColor(ContextCompat.getColor(this, R.color.white));
+                    mBtnSetting.setBackgroundColor(ContextCompat.getColor(this,R.color.statue_bar_color));
+                }
+                break;
         }
+        toggleDrawer();
     }
 }

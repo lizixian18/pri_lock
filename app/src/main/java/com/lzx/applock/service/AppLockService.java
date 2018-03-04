@@ -4,12 +4,16 @@ import android.app.ActivityManager;
 import android.app.Service;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageStatsManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -18,6 +22,9 @@ import com.lzx.applock.bean.LockAppInfo;
 import com.lzx.applock.constants.Constants;
 import com.lzx.applock.db.DbManager;
 import com.lzx.applock.module.lock.UnlockView;
+import com.lzx.applock.utils.LockUtil;
+import com.lzx.applock.utils.LogUtil;
+import com.lzx.applock.utils.SpUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +43,12 @@ public class AppLockService extends Service {
     private ActivityManager activityManager;
     private PackageManager mPackageManager;
     public static String currOpenPackageName = "";
+    public static boolean isChangeLockMode = false;
     private UnlockView mUnlockView;
+    private AppLockReceiver mReceiver;
+    private int lockMode;
+    private Handler mHandler = new Handler();
+    private List<String> homePackageNames;
 
     @Override
     public void onCreate() {
@@ -44,8 +56,21 @@ public class AppLockService extends Service {
         activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         mPackageManager = getPackageManager();
         mUnlockView = new UnlockView(this);
+        mReceiver = new AppLockReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_CLOSE_SYSTEM_DIALOGS); //Home键
+        filter.addAction(Intent.ACTION_SCREEN_OFF); //锁屏
+        filter.addAction(Constants.ACTION_UPDATE_LOCK_MODE);
+        registerReceiver(mReceiver, filter);
+        lockMode = SpUtil.getInstance().getInt(Constants.LOCK_MODEL);
 
-        new Thread(new ServiceWorker()).start();
+        AsyncTask.SERIAL_EXECUTOR.execute(new ServiceWorker());
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        homePackageNames = LockUtil.getHomePackageNames(this);
+        return super.onStartCommand(intent, flags, startId);
     }
 
     @Nullable
@@ -57,6 +82,8 @@ public class AppLockService extends Service {
     @Override
     public void onDestroy() {
         mIsServiceDestoryed.set(true);
+        unregisterReceiver(mReceiver);
+        mHandler.removeCallbacksAndMessages(null);
         super.onDestroy();
     }
 
@@ -65,13 +92,23 @@ public class AppLockService extends Service {
         @Override
         public void run() {
             while (!mIsServiceDestoryed.get()) {
-                String packageName = getLauncherTopApp(AppLockService.this, activityManager);
-                if (!inWhiteList(packageName) && !TextUtils.isEmpty(packageName) && !packageName.equals(currOpenPackageName)) {
+                String packageName = LockUtil.getLauncherTopApp(AppLockService.this, activityManager);
+
+                //关闭app后马上加锁
+                if (lockMode == 2) {
+                    //如果当前包名在桌面包名中，则代码app已经关闭
+                    if (homePackageNames.contains(packageName) && !TextUtils.isEmpty(currOpenPackageName)) {
+                        resumeLocking();
+                    }
+                }
+
+                if (!LockUtil.inWhiteList(packageName) && !TextUtils.isEmpty(packageName) &&
+                        !packageName.equals(currOpenPackageName)) {
 
                     //如果是加锁应用
                     if (DbManager.get().isLockedPackageName(packageName)) {
                         //先解锁，避免重复打开解锁View
-                        DbManager.get().updateLockedStatus(packageName, false);
+                        DbManager.get().updateIsSetUnlockStatus(packageName, true);
                         openUnLockView(packageName);
                         continue;
                     }
@@ -80,6 +117,9 @@ public class AppLockService extends Service {
         }
     }
 
+    /**
+     * 弹出解锁界面
+     */
     private void openUnLockView(String packageName) {
         try {
             currOpenPackageName = packageName;
@@ -94,58 +134,64 @@ public class AppLockService extends Service {
         }
     }
 
+    private class AppLockReceiver extends BroadcastReceiver {
 
-    /**
-     * 白名单
-     */
-    private boolean inWhiteList(String packageName) {
-        return packageName.equals(Constants.APP_PACKAGE_NAME) || packageName.equals("com.android.settings");
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (TextUtils.isEmpty(action)) {
+                return;
+            }
+            switch (action) {
+                case Intent.ACTION_CLOSE_SYSTEM_DIALOGS:
+                    //Home键关闭解锁界面
+                    mUnlockView.closeUnLockViewFormHomeAction();
+                    break;
+                case Intent.ACTION_SCREEN_OFF:
+                    //currOpenPackageName不为空则证明锁屏界面有打开过
+                    if (!TextUtils.isEmpty(currOpenPackageName)) {
+                        if (lockMode == 0) {
+                            //锁屏后立即加锁
+                            resumeLocking();
+                        } else if (lockMode == 1) {
+                            //锁屏3分钟后加锁，记录当前时间并开始计时
+                            SpUtil.getInstance().putLong(Constants.LOCK_CURR_MILLISENCONS, System.currentTimeMillis());
+                            mHandler.post(mTimerRunnable);
+                        }
+                    }
+                    break;
+                case Constants.ACTION_UPDATE_LOCK_MODE:
+                    lockMode = SpUtil.getInstance().getInt(Constants.LOCK_MODEL);
+                    if (!TextUtils.isEmpty(currOpenPackageName)) {
+
+                        isChangeLockMode = true;
+                    }
+                    break;
+            }
+        }
     }
 
-    /**
-     * 获取栈顶应用包名
-     */
-    public String getLauncherTopApp(Context context, ActivityManager activityManager) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            List<ActivityManager.RunningTaskInfo> appTasks = activityManager.getRunningTasks(1);
-            if (null != appTasks && !appTasks.isEmpty()) {
-                return appTasks.get(0).topActivity.getPackageName();
-            }
-        } else {
-            //5.0以后需要用这方法
-            UsageStatsManager sUsageStatsManager = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
-            long endTime = System.currentTimeMillis();
-            long beginTime = endTime - 10000;
-            String result = "";
-            UsageEvents.Event event = new UsageEvents.Event();
-            UsageEvents usageEvents = sUsageStatsManager.queryEvents(beginTime, endTime);
-            while (usageEvents.hasNextEvent()) {
-                usageEvents.getNextEvent(event);
-                if (event.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                    result = event.getPackageName();
+    private Runnable mTimerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mHandler.postDelayed(mTimerRunnable, 1000L);
+            long screenOffTime = SpUtil.getInstance().getLong(Constants.LOCK_CURR_MILLISENCONS);
+            //如果锁屏时间大于3分钟,加锁
+            if (System.currentTimeMillis() - screenOffTime > 3 * 60 * 1000L) {
+                if (!TextUtils.isEmpty(currOpenPackageName)) {
+                    mHandler.removeCallbacks(mTimerRunnable);
+                    resumeLocking();
                 }
             }
-            if (!android.text.TextUtils.isEmpty(result)) {
-                return result;
-            }
         }
-        return "";
-    }
+    };
 
     /**
-     * 获得属于桌面的应用的应用包名称
+     * 恢复加锁状态
      */
-    private List<String> getHomes() {
-        List<String> names = new ArrayList<>();
-        PackageManager packageManager = this.getPackageManager();
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_HOME);
-        List<ResolveInfo> resolveInfo = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-        for (ResolveInfo ri : resolveInfo) {
-            names.add(ri.activityInfo.packageName);
-        }
-        return names;
+    private void resumeLocking() {
+        DbManager.get().updateIsSetUnlockStatus(currOpenPackageName, false);
+        currOpenPackageName = "";
     }
-
 
 }

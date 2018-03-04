@@ -19,7 +19,9 @@ import com.lzx.applock.module.detail.CardDetailActivity;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * @author lzx
@@ -68,8 +70,7 @@ public class MainFragment extends BaseFragment {
         mUserCardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                CardDetailActivity.launch(getActivity(), "user" +
-                        "");
+                CardDetailActivity.launch(getActivity(), "user");
             }
         });
     }
@@ -97,6 +98,8 @@ public class MainFragment extends BaseFragment {
 
     private void updateAdapterData() {
         DbManager.get().queryLockAppInfoListAsync()
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<List<LockAppInfo>>() {
                     @Override
                     public void accept(List<LockAppInfo> lockAppInfos) throws Exception {

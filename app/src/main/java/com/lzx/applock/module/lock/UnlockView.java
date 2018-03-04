@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -28,6 +29,7 @@ import com.lzx.applock.service.AppLockService;
 import com.lzx.applock.utils.BlurUtil;
 import com.lzx.applock.utils.LockPatternUtils;
 import com.lzx.applock.utils.LockPatternViewPattern;
+import com.lzx.applock.utils.LockUtil;
 import com.lzx.applock.widget.LockPatternView;
 
 import java.util.List;
@@ -91,6 +93,10 @@ public class UnlockView extends FrameLayout {
                 PixelFormat.TRANSPARENT
         );
         mLayoutParams.gravity = Gravity.CENTER;
+
+        initLockPatternView();
+
+
     }
 
 
@@ -99,6 +105,7 @@ public class UnlockView extends FrameLayout {
     }
 
     private final static int MSG_ADDVIEW = 100;
+    private final static int MSG_GO_HOME = 200;
 
     private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
@@ -108,22 +115,54 @@ public class UnlockView extends FrameLayout {
                 case MSG_ADDVIEW:
                     mWindowManager.addView(UnlockView.this, mLayoutParams);
                     break;
+                case MSG_GO_HOME:
+                    closeUnLockView();
+                    break;
             }
         }
     };
 
+    /**
+     * 打开解锁界面
+     */
     public void showUnLockView() {
         if (mLockAppInfo == null) {
             return;
         }
         initBgView();
-        initLockPatternView();
         mHandler.obtainMessage(MSG_ADDVIEW).sendToTarget();
     }
 
-    private void closeUnLockView() {
+    /**
+     * 关闭解锁界面
+     */
+    private boolean closeUnLockView() {
         if (mWindowManager != null) {
-            mWindowManager.removeView(this);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                if (isAttachedToWindow()) {
+                    mWindowManager.removeViewImmediate(this);
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                try {
+                    if (getParent() != null) {
+                        mWindowManager.removeViewImmediate(this);
+                    }
+                    return true;
+                } catch (Exception e) {
+                    return false;
+                }
+            }
+        } else {
+            return false;
+        }
+    }
+
+    public void closeUnLockViewFormHomeAction() {
+        if (getParent() != null && mHandler != null) {
+            mHandler.sendEmptyMessageDelayed(MSG_GO_HOME, 500);
         }
     }
 
@@ -208,10 +247,8 @@ public class UnlockView extends FrameLayout {
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
             if (getParent() != null) {
-                goHome();
-                closeUnLockView();
-                DbManager.get().updateLockedStatus(mLockAppInfo.getPackageName(), true);
-                AppLockService.currOpenPackageName = "";
+                LockUtil.launchHome(mContext);
+                mHandler.sendEmptyMessageDelayed(MSG_GO_HOME, 500);
             }
             return true;
         }
@@ -219,13 +256,4 @@ public class UnlockView extends FrameLayout {
     }
 
 
-    /**
-     * Home键操作
-     */
-    public void goHome() {
-        Intent homeIntent = new Intent(Intent.ACTION_MAIN);
-        homeIntent.addCategory(Intent.CATEGORY_HOME);
-        homeIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(homeIntent);
-    }
 }

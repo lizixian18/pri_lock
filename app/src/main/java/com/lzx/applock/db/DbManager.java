@@ -58,7 +58,7 @@ public class DbManager {
      *
      * @return
      */
-    private List<LockAppInfo> queryInfoList() {
+    public List<LockAppInfo> queryInfoList() {
         Uri uri = LockContentProvider.LOCK_URI;
         Cursor cursor = mResolver.query(uri, null, null, null, null);
         if (cursor == null) {
@@ -91,7 +91,7 @@ public class DbManager {
     }
 
 
-    private void saveInfoList(List<LockAppInfo> list) {
+    public void saveInfoList(List<LockAppInfo> list) {
         clearInfoList();
         Uri uri = LockContentProvider.LOCK_URI;
         for (LockAppInfo info : list) {
@@ -109,11 +109,16 @@ public class DbManager {
     }
 
 
-    private int deleteInfoInPlayList(String packageName) {
+    public int deleteInfoByPackageName(String packageName) {
         Uri uri = LockContentProvider.LOCK_URI;
         return mResolver.delete(uri, DbConstants.PACKAGENAME + " = ?", new String[]{packageName});
     }
 
+    public void deleteInfoByList(List<LockAppInfo> list) {
+        for (LockAppInfo info : list) {
+            deleteInfoByPackageName(info.getPackageName());
+        }
+    }
 
     private int clearInfoList() {
         Uri uri = LockContentProvider.LOCK_URI;
@@ -150,6 +155,12 @@ public class DbManager {
         return info;
     }
 
+    /**
+     * 判断是否为加锁应用
+     * 只有 isLock = true 和 isSetUnLock = false 才是加锁应用
+     * 解锁时，只改变 isSetUnLock
+     * 在 app 内设置应用是否加锁的时候同时改变 isLock 和 isSetUnLock
+     */
     public boolean isLockedPackageName(String packageName) {
         Uri uri = LockContentProvider.LOCK_URI;
         Cursor cursor = mResolver.query(uri, null, DbConstants.PACKAGENAME + " = ?", new String[]{packageName}, null);
@@ -158,16 +169,34 @@ public class DbManager {
         }
         boolean result = false;
         while (cursor.moveToNext()) {
-            result = cursor.getInt(cursor.getColumnIndex(DbConstants.ISLOCK)) == 0;
+            boolean isLock = cursor.getInt(cursor.getColumnIndex(DbConstants.ISLOCK)) == 0;
+            boolean isSetUnLock = cursor.getInt(cursor.getColumnIndex(DbConstants.ISETUNLOCK)) == 0;
+            result = isLock && !isSetUnLock;
         }
         cursor.close();
         return result;
     }
 
+    /**
+     * 应用内设置加不加锁时调用
+     * 同时改变 isLock 和 isSetUnLock
+     */
     public void updateLockedStatus(String packageName, boolean isLocked) {
         Uri uri = LockContentProvider.LOCK_URI;
         ContentValues values = new ContentValues();
         values.put(DbConstants.ISLOCK, isLocked ? 0 : 1);
+        values.put(DbConstants.ISETUNLOCK, isLocked ? 0 : 1);
+        mResolver.update(uri, values, DbConstants.PACKAGENAME + " = ?", new String[]{packageName});
+    }
+
+    /**
+     * 解锁时调用
+     * 只改变 isSetUnLock
+     */
+    public void updateIsSetUnlockStatus(String packageName, boolean isLocked) {
+        Uri uri = LockContentProvider.LOCK_URI;
+        ContentValues values = new ContentValues();
+        values.put(DbConstants.ISETUNLOCK, isLocked ? 0 : 1);
         mResolver.update(uri, values, DbConstants.PACKAGENAME + " = ?", new String[]{packageName});
     }
 
@@ -178,7 +207,7 @@ public class DbManager {
                 saveInfoList(list);
                 emitter.onNext(true);
             }
-        }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread());
+        });
     }
 
     public Observable<List<LockAppInfo>> queryLockAppInfoListAsync() {
@@ -192,7 +221,7 @@ public class DbManager {
                 }
                 emitter.onNext(list);
             }
-        }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread());
+        });
     }
 
 

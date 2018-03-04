@@ -9,6 +9,7 @@ import android.text.TextUtils;
 
 import com.lzx.applock.bean.LockAppInfo;
 import com.lzx.applock.constants.Constants;
+import com.lzx.applock.utils.LogUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +76,7 @@ public class LoadAppHelper {
                 LockAppInfo info = new LockAppInfo(packageName, false, isRecommend);
                 ApplicationInfo appInfo = mPackageManager.getApplicationInfo(packageName, PackageManager.GET_UNINSTALLED_PACKAGES);
                 String appName = mPackageManager.getApplicationLabel(appInfo).toString();
-                if (isFilterOutApps(packageName)) {
+                if (!isFilterOutApps(packageName)) {
                     boolean isSysApp = (appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
                     info.setLocked(isRecommend);
                     info.setAppName(appName);
@@ -101,7 +102,7 @@ public class LoadAppHelper {
             public void subscribe(ObservableEmitter<List<LockAppInfo>> emitter) throws Exception {
                 emitter.onNext(loadLockAppInfo(activity));
             }
-        }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread());
+        });
     }
 
     public static Observable<List<LockAppInfo>> loadLockedAppInfoAsync(final Activity activity) {
@@ -117,7 +118,7 @@ public class LoadAppHelper {
                 }
                 emitter.onNext(lockAppInfos);
             }
-        }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread());
+        });
     }
 
     public static Observable<List<LockAppInfo>> loadUnLockAppInfoAsync(final Activity activity) {
@@ -133,7 +134,7 @@ public class LoadAppHelper {
                 }
                 emitter.onNext(lockAppInfos);
             }
-        }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread());
+        });
     }
 
     public static Observable<List<LockAppInfo>> loadSystemAppInfoAsync(final Activity activity) {
@@ -149,7 +150,7 @@ public class LoadAppHelper {
                 }
                 emitter.onNext(lockAppInfos);
             }
-        }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread());
+        });
     }
 
     public static Observable<List<LockAppInfo>> loadUserAppInfoAsync(final Activity activity) {
@@ -165,7 +166,7 @@ public class LoadAppHelper {
                 }
                 emitter.onNext(lockAppInfos);
             }
-        }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread());
+        });
     }
 
     /**
@@ -180,9 +181,9 @@ public class LoadAppHelper {
      * 过滤的应用
      */
     private static boolean isFilterOutApps(String packageName) {
-        return !packageName.equals(Constants.APP_PACKAGE_NAME) &&
-                !packageName.equals("com.android.settings") &&
-                !packageName.equals("com.google.android.googlequicksearchbox");
+        return packageName.equals(Constants.APP_PACKAGE_NAME) ||
+                packageName.equals("com.android.settings") ||
+                packageName.equals("com.google.android.googlequicksearchbox");
     }
 
 }

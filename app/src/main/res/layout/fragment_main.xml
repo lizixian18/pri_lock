@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -14,10 +13,10 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:titleTextAppearance="@style/ToolBar.TitleText"
             app:layout_collapseMode="pin"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-            app:theme="@style/Theme.AppCompat.NoActionBar"/>
+            app:theme="@style/Theme.AppCompat.NoActionBar"
+            app:titleTextAppearance="@style/ToolBar.TitleText" />
 
     </android.support.design.widget.AppBarLayout>
 
@@ -59,7 +58,7 @@
                             android:layout_height="50dp"
                             android:layout_centerHorizontal="true"
                             android:layout_marginTop="30dp"
-                            android:src="@drawable/ic_home_sys"/>
+                            android:src="@drawable/ic_home_sys" />
 
                         <TextView
                             android:id="@+id/sys_title"
@@ -68,9 +67,9 @@
                             android:layout_below="@id/sys_icon"
                             android:layout_marginTop="16dp"
                             android:gravity="center"
-                            android:text="SystemApp"
+                            android:text="@string/sys_app"
                             android:textColor="@color/white"
-                            android:textSize="20sp"/>
+                            android:textSize="20sp" />
 
                         <Switch
                             android:id="@+id/sys_switch"
@@ -79,7 +78,7 @@
                             android:layout_below="@id/sys_title"
                             android:layout_centerHorizontal="true"
                             android:layout_marginTop="16dp"
-                            android:shadowColor="#bc47a7ff"/>
+                            android:shadowColor="#bc47a7ff" />
                     </RelativeLayout>
 
                 </android.support.v7.widget.CardView>
@@ -104,7 +103,7 @@
                             android:layout_height="50dp"
                             android:layout_centerHorizontal="true"
                             android:layout_marginTop="30dp"
-                            android:src="@drawable/ic_home_user"/>
+                            android:src="@drawable/ic_home_user" />
 
                         <TextView
                             android:id="@+id/other_title"
@@ -113,9 +112,9 @@
                             android:layout_below="@id/other_icon"
                             android:layout_marginTop="16dp"
                             android:gravity="center"
-                            android:text="UserApp"
+                            android:text="@string/user_app"
                             android:textColor="@color/white"
-                            android:textSize="20sp"/>
+                            android:textSize="20sp" />
 
                         <Switch
                             android:id="@+id/other_switch"
@@ -124,7 +123,7 @@
                             android:layout_below="@id/other_title"
                             android:layout_centerHorizontal="true"
                             android:layout_marginTop="16dp"
-                            android:shadowColor="#bc47a7ff"/>
+                            android:shadowColor="#bc47a7ff" />
                     </RelativeLayout>
 
                 </android.support.v7.widget.CardView>
@@ -138,12 +137,12 @@
                 android:layout_marginTop="16dp"
                 android:text="Locked apps"
                 android:textColor="@color/colorAccent"
-                android:textSize="14sp"/>
+                android:textSize="14sp" />
 
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/locked_recycleview"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -153,13 +152,13 @@
                 android:layout_marginTop="16dp"
                 android:text="UnLocked apps"
                 android:textColor="@color/colorAccent"
-                android:textSize="14sp"/>
+                android:textSize="14sp" />
 
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/unlocked_recycleview"
-                android:layout_marginBottom="30dp"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dp" />
 
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>

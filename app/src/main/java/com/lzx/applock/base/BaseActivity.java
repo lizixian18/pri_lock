@@ -5,6 +5,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
@@ -19,7 +20,7 @@ import com.trello.rxlifecycle2.components.support.RxAppCompatActivity;
 
 public abstract class BaseActivity extends RxAppCompatActivity {
     protected Context mContext;
-    private Toolbar mToolbar;
+    protected Toolbar mToolbar;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -30,7 +31,8 @@ public abstract class BaseActivity extends RxAppCompatActivity {
         init(savedInstanceState);
     }
 
-    protected abstract @LayoutRes  int getLayoutId();
+    protected abstract @LayoutRes
+    int getLayoutId();
 
     /**
      * 初始化StatusBar
@@ -40,6 +42,7 @@ public abstract class BaseActivity extends RxAppCompatActivity {
         if (mToolbar != null) {
             SystemBarHelper.immersiveStatusBar(this, 0);
             SystemBarHelper.setHeightAndPadding(this, mToolbar);
+            mToolbar.setTitleTextColor(ContextCompat.getColor(this,R.color.colorAccent));
             setSupportActionBar(mToolbar);
             getSupportActionBar().setTitle("");
             mToolbar.setTitleMarginStart(0);

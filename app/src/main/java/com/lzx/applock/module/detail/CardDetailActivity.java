@@ -27,7 +27,9 @@ import com.lzx.applock.utils.SystemBarHelper;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * @author lzx
@@ -71,13 +73,13 @@ public class CardDetailActivity extends BaseActivity {
         if (type.equals("sys")) {
             mBgView.setBackgroundColor(Color.parseColor("#47A7FF"));
             mIcon.setImageResource(R.drawable.ic_home_sys);
-            mTitle.setText("SystemApp");
-            mToolTitle.setText("SystemApp");
+            mTitle.setText(getString(R.string.sys_app));
+            mToolTitle.setText(getString(R.string.sys_app));
         } else {
             mBgView.setBackgroundColor(Color.parseColor("#F69147"));
             mIcon.setImageResource(R.drawable.ic_home_user);
-            mTitle.setText("UserApp");
-            mToolTitle.setText("UserApp");
+            mTitle.setText(getString(R.string.user_app));
+            mToolTitle.setText(getString(R.string.user_app));
         }
         updateStatusBarColor();
         //设置还没收缩时状态下字体颜色
@@ -105,6 +107,8 @@ public class CardDetailActivity extends BaseActivity {
         mRecyclerView.setAdapter(mLockedListAdapter);
 
         DbManager.get().queryLockAppInfoListAsync()
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<List<LockAppInfo>>() {
                     @Override
                     public void accept(List<LockAppInfo> lockAppInfos) throws Exception {
